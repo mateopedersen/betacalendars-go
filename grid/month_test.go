@@ -101,6 +101,47 @@ func TestYearGrid(t *testing.T) {
 	}
 }
 
+func TestCalendarProperties1900To2100(t *testing.T) {
+	for year := 1900; year <= 2100; year++ {
+		calendarYear, err := grid.Year(year, grid.Options{})
+		if err != nil {
+			t.Fatalf("grid.Year(%d): %v", year, err)
+		}
+		if len(calendarYear.Months) != 12 {
+			t.Fatalf("year %d has %d months", year, len(calendarYear.Months))
+		}
+		for monthIndex, month := range calendarYear.Months {
+			if month.Month != time.Month(monthIndex+1) || len(month.Cells) != 42 {
+				t.Fatalf("%04d-%02d month index/cell count = %v/%d", year, month.Month, month.Month, len(month.Cells))
+			}
+			seen := make(map[int]int)
+			for index, cell := range month.Cells {
+				if !cell.HasDate {
+					t.Fatalf("adjacent grid %04d-%02d cell %d is blank", year, month.Month, index)
+				}
+				if cell.InMonth {
+					seen[cell.Date.Day()]++
+				}
+				if index > 0 {
+					next, err := month.Cells[index-1].Date.AddDays(1)
+					if err != nil || !next.Equal(cell.Date) {
+						t.Fatalf("%04d-%02d adjacent cells are not consecutive at %d: %s -> %s (%v)", year, month.Month, index, month.Cells[index-1].Date, cell.Date, err)
+					}
+				}
+			}
+			days, _ := betacalendars.DaysInMonth(year, month.Month)
+			if len(seen) != days {
+				t.Fatalf("%04d-%02d contains %d unique requested-month days, want %d", year, month.Month, len(seen), days)
+			}
+			for day := 1; day <= days; day++ {
+				if seen[day] != 1 {
+					t.Fatalf("%04d-%02d day %d appears %d times", year, month.Month, day, seen[day])
+				}
+			}
+		}
+	}
+}
+
 func FuzzMonthGrid(f *testing.F) {
 	f.Add(uint16(2027), uint8(1), uint8(0), uint8(0), uint8(0))
 	f.Add(uint16(1900), uint8(2), uint8(6), uint8(1), uint8(1))

@@ -29,6 +29,16 @@ jobs:
         run: |
           go mod tidy
           git diff --exit-code -- go.mod go.sum
+      - name: Smoke check package documentation
+        shell: bash
+        run: |
+          go doc . >/dev/null
+          go doc ./grid >/dev/null
+          go doc ./recurrence >/dev/null
+          go doc ./boundary >/dev/null
+          go doc ./fixtures >/dev/null
+          go doc ./yearturn >/dev/null
+          go doc ./cmd/betacal >/dev/null
       - name: Vet
         run: go vet ./...
       - name: Test

@@ -1,9 +1,9 @@
 # betacalendars-go
 
-A dependency-free Go library for Gregorian dates, calendar grids, recurrence rules, boundary fixtures, and November-through-February year-turn views.
+A dependency-free Go library for Gregorian dates, calendar grids, bounded recurrence rules, calendar-boundary fixtures, and November-through-February year-turn views.
 
 - Module: `github.com/mateopedersen/betacalendars-go`
-- Go: 1.22 or newer
+- Minimum Go version: 1.22
 - License: MIT
 
 ## Packages
@@ -11,7 +11,7 @@ A dependency-free Go library for Gregorian dates, calendar grids, recurrence rul
 | Package | Purpose |
 | --- | --- |
 | `betacalendars` | Validated civil dates, Gregorian leap years, date arithmetic, ISO weeks, and weekday types |
-| `grid` | Monday-first or configurable month/year grids, fixed six-week or compact layouts, adjacent or blank overflow cells |
+| `grid` | Configurable month/year grids, fixed or compact layouts, adjacent or blank overflow cells |
 | `recurrence` | Bounded daily, weekly, monthly, nth-weekday, last-weekday, and annual rules |
 | `boundary` | Month-length, year-turn, leap-day, and ISO week-year transitions |
 | `fixtures` | Deterministic JSON and CSV fixture datasets |
@@ -33,15 +33,11 @@ import (
 
 func main() {
     date, err := betacalendars.NewDate(2028, time.February, 29)
-    if err != nil {
-        panic(err)
-    }
+    if err != nil { panic(err) }
     fmt.Println(date, date.Weekday())
 
     month, err := grid.Month(2028, time.February, grid.Options{})
-    if err != nil {
-        panic(err)
-    }
+    if err != nil { panic(err) }
     fmt.Printf("%d rows, %d cells\n", month.Rows, len(month.Cells))
 }
 ```
@@ -54,19 +50,33 @@ The zero `grid.Options` value produces a Monday-first, fixed six-row grid popula
 
 ## Recurrence
 
-Create a rule with a constructor and expand it over an inclusive, finite date range:
+Create a rule and expand it over an inclusive, finite date range:
 
 ```go
-rule, err := recurrence.Annual(time.February, 29, recurrence.Clamp)
-if err != nil { panic(err) }
-occurrences, err := recurrence.Expand(rule, recurrence.Options{
-    Start: mustDate("2024-01-01"),
-    End: mustDate("2028-12-31"),
-    Limit: 10,
-})
+package main
+
+import (
+    "fmt"
+    "time"
+
+    "github.com/mateopedersen/betacalendars-go"
+    "github.com/mateopedersen/betacalendars-go/recurrence"
+)
+
+func main() {
+    rule, err := recurrence.Annual(time.February, 29, recurrence.Clamp)
+    if err != nil { panic(err) }
+    start, err := betacalendars.ParseDate("2024-01-01")
+    if err != nil { panic(err) }
+    end, err := betacalendars.ParseDate("2028-12-31")
+    if err != nil { panic(err) }
+    occurrences, err := recurrence.Expand(rule, recurrence.Options{Start: start, End: end, Limit: 10})
+    if err != nil { panic(err) }
+    fmt.Println(occurrences)
+}
 ```
 
-Monthly and annual rules accept `Skip`, `Clamp`, or `Error` when the requested day does not exist. Expansion requires a positive occurrence limit and returns an error rather than silently truncating.
+Monthly and annual rules accept `Skip`, `Clamp`, or `Error` when a requested day does not exist in a period. Expansion requires a positive occurrence limit and returns an error instead of silently truncating results.
 
 ## Fixtures and CLI
 
