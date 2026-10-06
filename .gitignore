@@ -1,0 +1,4 @@
+/betacal
+/betacal.exe
+*.test
+coverage.out
