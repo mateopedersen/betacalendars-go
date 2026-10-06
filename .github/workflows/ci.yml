@@ -21,10 +21,11 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.go }}
-          cache: true
+          cache: false
       - name: Verify formatting
-        shell: bash
-        run: test -z "$(gofmt -l $(git ls-files '*.go'))"
+        run: |
+          go fmt ./...
+          git diff --exit-code
       - name: Verify module files
         run: |
           go mod tidy
@@ -50,4 +51,4 @@ jobs:
         if: runner.os == 'Linux' && matrix.go == '1.27.x'
         run: go test -run '^$' -fuzz '^FuzzDateRoundTrip$' -fuzztime=3s .
       - name: Build CLI
-        run: go build -o betacal ./cmd/betacal
+        run: go build ./cmd/betacal
